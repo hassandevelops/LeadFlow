@@ -9,9 +9,11 @@ Team workspace for the NASCON Web Dev problem statement: a multi-tenant CRM that
 - [x] Contract package (`shared/`) with Zod schemas, enums, permissions, realtime events
 - [x] Shared docs (`docs/`): conventions, data model, API routes, integrations, metrics
 - [x] Local infrastructure (`docker-compose.yml`: Postgres + Redis)
-- [ ] Backend scaffold (Express + Prisma)
-- [ ] Frontend scaffold (Vite + React)
-- [ ] Seed data
+- [x] Backend scaffold (Express + Prisma) + M1: auth, sessions, RBAC, socket handshake
+- [x] Backend M2–M10: CRM routes, lead intake + assignment engine, conversations (Twilio), payments (Stripe), integrations + OAuth, calendar sync, dashboard, audit, BullMQ workers/webhooks
+- [x] Frontend scaffold (Vite + React + Tailwind, TanStack Query, socket client, MSW mocks)
+- [x] Frontend app: all PRD milestones M1–M10 implemented against the contract, demo mode via `VITE_ENABLE_MOCKS=true`
+- [x] Seed data (`npm run prisma:seed --workspace backend`)
 
 ## Architecture
 
@@ -41,10 +43,16 @@ frontend (React + Vite, :5173)          backend (Express + TS, :4000)          p
 ```bash
 npm install                 # installs all workspaces (zod, typescript)
 docker compose up -d        # starts Postgres (:5432) and Redis (:6379)
+cp backend/.env.example backend/.env
+npm run prisma:migrate --workspace backend   # applies migrations
+npm run prisma:seed --workspace backend      # demo workspace + users (password123)
+npm run dev:backend         # API on http://localhost:4000
 npm run typecheck           # validates the contract compiles
 ```
 
-Backend and frontend apps are scaffolded next; see `docs/plan.md` for the milestone order and the split of work.
+Invited users are created with a generated temporary password that the backend prints to its console in development (an invite email arrives with the Resend integration, M8).
+
+The seed recreates the workspace `acme-sales` with 8 users sharing the password `password123` (owners: `olivia@leadflow.dev`, `noah@leadflow.dev`; manager: `maya@leadflow.dev`; agents: `emma@leadflow.dev`, `liam@leadflow.dev`, `adam@leadflow.dev`, `sofia@leadflow.dev`, `james@leadflow.dev`).
 
 ## The contract-first workflow (read this before writing code)
 
