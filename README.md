@@ -1,6 +1,6 @@
 # LeadFlow — Unified Business Management Platform
 
-Team workspace for the NASCON Web Dev problem statement: a multi-tenant CRM that protects every inbound lead, with real integrations for WhatsApp messaging (Twilio), payments (Stripe), calendar (Google) and email alerts (Resend).
+Team workspace for the NASCON Web Dev problem statement: a multi-tenant CRM that protects every inbound lead, with real integrations for WhatsApp messaging (Green API), payments (Stripe), calendar (Google) and email alerts (Resend).
 
 **This repo is the single source of truth shared by the frontend and backend developers.** The API contract lives in `shared/` as Zod schemas; every endpoint and payload must be defined there before either side implements it.
 
@@ -10,7 +10,7 @@ Team workspace for the NASCON Web Dev problem statement: a multi-tenant CRM that
 - [x] Shared docs (`docs/`): conventions, data model, API routes, integrations, metrics
 - [x] Local infrastructure (`docker-compose.yml`: Postgres + Redis)
 - [x] Backend scaffold (Express + Prisma) + M1: auth, sessions, RBAC, socket handshake
-- [x] Backend M2–M10: CRM routes, lead intake + assignment engine, conversations (Twilio), payments (Stripe), integrations + OAuth, calendar sync, dashboard, audit, BullMQ workers/webhooks
+- [x] Backend M2–M10: CRM routes, lead intake + assignment engine, conversations (WhatsApp via Green API), payments (Stripe), integrations + OAuth, calendar sync, dashboard, audit, BullMQ workers/webhooks
 - [x] Frontend scaffold (Vite + React + Tailwind, TanStack Query, socket client, MSW mocks)
 - [x] Frontend app: all PRD milestones M1–M10 implemented against the contract, demo mode via `VITE_ENABLE_MOCKS=true`
 - [x] Seed data (`npm run prisma:seed --workspace backend`)
@@ -20,7 +20,7 @@ Team workspace for the NASCON Web Dev problem statement: a multi-tenant CRM that
 ```
 frontend (React + Vite, :5173)          backend (Express + TS, :4000)          providers
 ┌───────────────────────────┐  REST    ┌────────────────────────────┐  webhooks  ┌─────────────┐
-│ screens, forms, socket.io │ ◄──────► │ REST API /api/v1           │ ◄────────► │ Twilio WA   │
+│ screens, forms, socket.io │ ◄──────► │ REST API /api/v1           │ ◄────────► │ Green API   │
 │ client, permission-gated  │  WS      │ Prisma → Postgres          │  OAuth     │ Stripe      │
 │ UI (server still enforces)│ ◄──────► │ BullMQ timers → Redis      │            │ Google Cal  │
 └───────────────────────────┘          │ integration adapters       │            │ Resend      │
@@ -53,6 +53,8 @@ npm run typecheck           # validates the contract compiles
 Invited users are created with a generated temporary password that the backend prints to its console in development (an invite email arrives with the Resend integration, M8).
 
 The seed recreates the workspace `acme-sales` with 8 users sharing the password `password123` (owners: `olivia@leadflow.dev`, `noah@leadflow.dev`; manager: `maya@leadflow.dev`; agents: `emma@leadflow.dev`, `liam@leadflow.dev`, `adam@leadflow.dev`, `sofia@leadflow.dev`, `james@leadflow.dev`).
+
+**Testing Stripe without an account:** set `STRIPE_STUB=1` in `backend/.env`, connect Stripe in the UI with placeholder keys, then create a payment request and drive the webhook with `npm run stripe:simulate -- <paymentRequestId> [completed|failed|expired|refunded]` — the event is signed and delivered to the real local webhook, so idempotency, Payment rows, activities and socket events all run as usual.
 
 ## The contract-first workflow (read this before writing code)
 

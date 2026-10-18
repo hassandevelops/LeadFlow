@@ -6,7 +6,7 @@ import { enqueueOutbound } from "../lib/queues";
 import { toConversation, toMessage } from "../lib/serialize";
 import { parseBody, parseIdParam, parseQuery } from "../lib/validation";
 import { authOf, requirePermission } from "../middleware/auth";
-import { resolveCredentials } from "../services/integrations";
+import { isWhatsAppConfigured } from "../services/whatsapp";
 
 export const conversationsRouter = Router();
 
@@ -74,9 +74,10 @@ conversationsRouter.post("/conversations/:id/messages", requirePermission("crm.e
     throw ApiError.conflict("This contact has opted out of WhatsApp messages");
   }
 
-  const resolved = await resolveCredentials(workspaceId, "twilio_whatsapp");
-  if (!resolved) {
-    throw ApiError.providerError("WhatsApp is not connected. Connect Twilio in Integrations.");
+  if (!isWhatsAppConfigured()) {
+    throw ApiError.providerError(
+      "WhatsApp is not connected. Set GREEN_ID and GREEN_TOKEN in the backend environment.",
+    );
   }
 
   const now = new Date();
@@ -125,9 +126,10 @@ conversationsRouter.post(
       throw ApiError.conflict("This contact has opted out of WhatsApp messages");
     }
 
-    const resolved = await resolveCredentials(workspaceId, "twilio_whatsapp");
-    if (!resolved) {
-      throw ApiError.providerError("WhatsApp is not connected. Connect Twilio in Integrations.");
+    if (!isWhatsAppConfigured()) {
+      throw ApiError.providerError(
+        "WhatsApp is not connected. Set GREEN_ID and GREEN_TOKEN in the backend environment.",
+      );
     }
 
     const updated = await prisma.message.update({

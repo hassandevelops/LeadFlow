@@ -1,5 +1,7 @@
+import { randomBytes } from "node:crypto";
 import Stripe from "stripe";
 import { withTimeout } from "../lib/async";
+import { stripeStubEnabled } from "../config/env";
 import type { ProviderCredentials } from "../services/integrations";
 import { ProviderError } from "./errors";
 
@@ -21,6 +23,9 @@ export async function createCheckoutSession(
     metadata: Record<string, string>;
   },
 ): Promise<{ id: string; url: string | null }> {
+  if (stripeStubEnabled) {
+    return { id: `cs_stub_${randomBytes(8).toString("hex")}`, url: input.successUrl };
+  }
   const stripe = stripeClient(credentials);
   try {
     const session = await withTimeout(

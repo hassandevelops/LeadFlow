@@ -12,18 +12,18 @@ Providers must run in their real sandbox/test mode (no hard-coded stand-ins). Ev
 - Isolation: a provider outage must not break the rest of the platform; outbound calls go through a queue with timeouts (I5.8).
 - Local dev needs a tunnel (`ngrok http 4000` or `cloudflared tunnel --url http://localhost:4000`); set `PUBLIC_WEBHOOK_URL` to the tunnel URL.
 
-## I1 — Twilio WhatsApp Sandbox
+## I1 — WhatsApp (Green API)
 
 | Item | Value |
 |---|---|
-| Env (dev fallback) | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` |
-| Inbound webhook | `POST {PUBLIC_WEBHOOK_URL}/api/webhooks/twilio/whatsapp` |
-| Status callback | `POST {PUBLIC_WEBHOOK_URL}/api/webhooks/twilio/status` |
-| Verification | `X-Twilio-Signature` HMAC-SHA1 over the full URL + sorted params, validated with the auth token |
-| Idempotency key | `MessageSid` |
-| Sending | REST API; store `status` transitions `queued → sent → delivered | failed` |
+| Env | `GREEN_ID`, `GREEN_TOKEN` (one workspace-wide instance; no per-workspace row is consulted for sending) |
+| Sending | `POST {cluster}.api.greenapi.com/waInstance{GREEN_ID}/sendMessage/{GREEN_TOKEN}` with `{chatId, message}`; cluster host derived from the first four digits of `GREEN_ID` |
+| Number normalization | Strip non-digits and a leading `00`; a leading `0` is national format and becomes `92…` before `@c.us` |
+| Errors | Non-2xx responses raise `ProviderError` with the HTTP status (4xx permanent, 5xx retried with backoff); recorded in `ProviderEvent` |
+| Sending status | `queued → sent → failed`; the Green API `idMessage` is stored as `providerMessageId` |
+| Inbound webhook | **Pending migration.** Legacy `POST {PUBLIC_WEBHOOK_URL}/api/webhooks/twilio/whatsapp` + `/status` remain mounted (signature `X-Twilio-Signature`, idempotency key `MessageSid`) until inbound is ported to Green API — that needs a workspace-routing decision (one instance = one number) |
 | Threading | Group by contact + channel into a `Conversation`; unknown number creates contact + lead (I1.5) |
-| Limits to show in UI | Sandbox only messages phones that joined with the join phrase (I5.6) |
+| Limits to show in UI | Green API instance must be in `authorized` state; sandbox instances can only message chats allowed by WhatsApp |
 
 ## I2 — Stripe (test mode)
 

@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma";
 import { emitToWorkspace } from "../realtime/io";
 import { sendEmail } from "../providers/resend";
 import { deleteEvent, insertEvent, patchEvent, GoogleInvalidGrantError } from "../providers/google";
-import { sendWhatsApp } from "../providers/twilio";
+import { isWhatsAppConfigured, sendWhatsApp } from "./whatsapp";
 import { ProviderError } from "../providers/errors";
 import { env } from "../config/env";
 import { markIntegrationError, markIntegrationSuccess, recordProviderEvent, resolveCredentials } from "./integrations";
@@ -48,8 +48,7 @@ async function processWhatsAppSend(job: Extract<OutboundJob, { kind: "whatsapp_s
     return;
   }
 
-  const resolved = await resolveCredentials(job.workspaceId, "twilio_whatsapp");
-  if (!resolved) {
+  if (!isWhatsAppConfigured()) {
     await failMessage(message.id, "not_connected", "WhatsApp is not connected");
     await recordProviderEvent({
       workspaceId: job.workspaceId,
@@ -64,27 +63,23 @@ async function processWhatsAppSend(job: Extract<OutboundJob, { kind: "whatsapp_s
   }
 
   try {
-    const { sid } = await sendWhatsApp(resolved.credentials, {
-      to: contact.phone,
-      body: message.body,
-    });
+    const { idMessage } = await sendWhatsApp(contact.phone, message.body);
     const updated = await prisma.message.update({
       where: { id: message.id },
       data: {
         status: "sent",
-        providerMessageId: sid || message.providerMessageId,
+        providerMessageId: idMessage || message.providerMessageId,
         errorCode: null,
         errorMessage: null,
       },
     });
-    await markIntegrationSuccess(job.workspaceId, "twilio_whatsapp");
     await recordProviderEvent({
       workspaceId: job.workspaceId,
       provider: "twilio_whatsapp",
-      externalId: `send:${sid || message.id}`,
+      externalId: `send:${idMessage || message.id}`,
       direction: "outbound",
       eventType: "message_send",
-      payload: { messageId: message.id, sid },
+      payload: { messageId: message.id, idMessage },
       result: "success",
     });
     emitToWorkspace(job.workspaceId, "message.status_updated", {

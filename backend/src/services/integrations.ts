@@ -37,14 +37,6 @@ const ENV_LABELS: Record<IntegrationProvider, string> = {
 };
 
 function envCredentials(provider: IntegrationProvider): ProviderCredentials | null {
-  if (provider === "twilio_whatsapp") {
-    if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) return null;
-    return {
-      accountSid: env.TWILIO_ACCOUNT_SID,
-      authToken: env.TWILIO_AUTH_TOKEN,
-      whatsappFrom: env.TWILIO_WHATSAPP_FROM ?? "whatsapp:+14155238886",
-    };
-  }
   if (provider === "stripe") {
     if (!env.STRIPE_SECRET_KEY) return null;
     return {

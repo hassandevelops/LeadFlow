@@ -17,9 +17,9 @@ const envSchema = z.object({
   ENCRYPTION_KEY: blankAsUndefined(z.string().min(32).optional()),
   STRIPE_SECRET_KEY: blankAsUndefined(z.string().optional()),
   STRIPE_WEBHOOK_SECRET: blankAsUndefined(z.string().optional()),
-  TWILIO_ACCOUNT_SID: blankAsUndefined(z.string().optional()),
-  TWILIO_AUTH_TOKEN: blankAsUndefined(z.string().optional()),
-  TWILIO_WHATSAPP_FROM: blankAsUndefined(z.string().optional()),
+  STRIPE_STUB: blankAsUndefined(z.string().optional()),
+  GREEN_ID: blankAsUndefined(z.string().optional()),
+  GREEN_TOKEN: blankAsUndefined(z.string().optional()),
   GOOGLE_CLIENT_ID: blankAsUndefined(z.string().optional()),
   GOOGLE_CLIENT_SECRET: blankAsUndefined(z.string().optional()),
   GOOGLE_REDIRECT_URI: blankAsUndefined(z.string().url().optional()),
@@ -43,4 +43,6 @@ function loadEnv(): Env {
 export const env = loadEnv();
 
 export const isProduction = env.NODE_ENV === "production";
+export const stripeStubEnabled =
+  env.NODE_ENV !== "production" && (env.STRIPE_STUB === "1" || env.STRIPE_STUB === "true");
 export const sessionIdleMs = env.SESSION_IDLE_HOURS * 60 * 60 * 1000;
