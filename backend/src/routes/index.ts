@@ -1,0 +1,38 @@
+import { Router } from "express";
+import { appointmentsRouter } from "./appointments";
+import { auditRouter } from "./audit";
+import { authRouter } from "./auth";
+import { companiesRouter } from "./companies";
+import { contactsRouter } from "./contacts";
+import { conversationsRouter } from "./conversations";
+import { customFieldsRouter } from "./custom-fields";
+import { dashboardRouter } from "./dashboard";
+import { integrationsRouter } from "./integrations";
+import { leadsRouter } from "./leads";
+import { miscRouter } from "./misc";
+import { opportunitiesRouter } from "./opportunities";
+import { paymentsRouter } from "./payments";
+import { pipelinesRouter } from "./pipelines";
+import { publicFormsRouter } from "./public-forms";
+import { savedListsRouter } from "./saved-lists";
+import { usersRouter } from "./users";
+
+export const apiRouter = Router();
+
+apiRouter.use(authRouter);
+apiRouter.use(miscRouter);
+apiRouter.use(usersRouter);
+apiRouter.use(companiesRouter);
+apiRouter.use(contactsRouter);
+apiRouter.use(opportunitiesRouter);
+apiRouter.use(pipelinesRouter);
+apiRouter.use(customFieldsRouter);
+apiRouter.use(savedListsRouter);
+apiRouter.use(leadsRouter);
+apiRouter.use(conversationsRouter);
+apiRouter.use(publicFormsRouter);
+apiRouter.use(paymentsRouter);
+apiRouter.use(integrationsRouter);
+apiRouter.use(appointmentsRouter);
+apiRouter.use(auditRouter);
+apiRouter.use(dashboardRouter);
